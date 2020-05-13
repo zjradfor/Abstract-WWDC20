@@ -6,20 +6,17 @@ import PlaygroundSupport
 class CanvasViewController : UIViewController {
     
     var canvas: UIView!
+    var stackMenu: UIStackView!
     
     override func loadView() {
-        let view = UIView()
         canvas = UIView()
         
-        if let navbar = navigationController?.navigationBar {
-            canvas.frame = CGRect(x: 0, y: navbar.frame.height, width: view.frame.width, height: view.frame.height)
-        }
         canvas.backgroundColor = .white
-        view.addSubview(canvas)
-        
+
+        self.view = canvas
         configureUI()
         
-        self.view = view
+        
     }
     
     private func configureUI() {
@@ -46,34 +43,99 @@ class CanvasViewController : UIViewController {
     }
     
     private func setupToolBar() {
-        let stackMenu = UIStackView()
+        stackMenu = UIStackView()
         stackMenu.axis = .horizontal
-        stackMenu.frame = CGRect(x: 10, y: 10, width: 0, height: 0)
-        stackMenu.distribution = .fillEqually
+        stackMenu.frame = CGRect(x: 10, y: 70, width: 300, height: 50)
+        stackMenu.distribution = .fillProportionally
+        stackMenu.spacing = 2.0
+
+        let commonButtonSize: CGRect = CGRect(x: 0, y: 0, width: 30, height: 30)
+        let symbolConfig = UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold, scale: .medium)
+        let toolSymbolConfig = UIImage.SymbolConfiguration(pointSize: 50, weight: .bold, scale: .large)
         
-        let toolButton = UIButton(type: .system)
-        toolButton.setImage(UIImage(systemName: "pencil.circle"), for: .normal)
+        let toolButton = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        toolButton.setImage(UIImage(systemName: "pencil.circle", withConfiguration: toolSymbolConfig), for: .normal)
         toolButton.addTarget(self, action: #selector(handleToolTapped), for: .touchUpInside)
+        stackMenu.addArrangedSubview(toolButton)
         
+        let addButton = UIButton(frame: commonButtonSize)
+        addButton.setImage(UIImage(systemName: "plus", withConfiguration: symbolConfig), for: .normal)
+        addButton.addTarget(self, action: #selector(handleAddTapped), for: .touchUpInside)
+        stackMenu.addArrangedSubview(addButton)
+
+        let colourButton = UIButton(frame: commonButtonSize)
+        colourButton.setImage(UIImage(systemName: "paintbrush", withConfiguration: symbolConfig), for: .normal)
+        colourButton.addTarget(self, action: #selector(handleColourTapped), for: .touchUpInside)
+        stackMenu.addArrangedSubview(colourButton)
+
+        let moveButton = UIButton(frame: commonButtonSize)
+        moveButton.setImage(UIImage(systemName: "hand.draw", withConfiguration: symbolConfig), for: .normal)
+        moveButton.addTarget(self, action: #selector(handleMoveTapped), for: .touchUpInside)
+        stackMenu.addArrangedSubview(moveButton)
+
+        let resizeButton = UIButton(frame: commonButtonSize)
+        resizeButton.setImage(UIImage(systemName: "arrow.up.left.and.arrow.down.right", withConfiguration: symbolConfig), for: .normal)
+        resizeButton.addTarget(self, action: #selector(handleResizeTapped), for: .touchUpInside)
+        stackMenu.addArrangedSubview(resizeButton)
+
+        let rotateButton = UIButton(frame: commonButtonSize)
+        rotateButton.setImage(UIImage(systemName: "arrow.2.circlepath", withConfiguration: symbolConfig), for: .normal)
+        rotateButton.addTarget(self, action: #selector(handleRotateTapped), for: .touchUpInside)
+        stackMenu.addArrangedSubview(rotateButton)
+
+        let trashButton = UIButton(frame: commonButtonSize)
+        trashButton.setImage(UIImage(systemName: "trash", withConfiguration: symbolConfig), for: .normal)
+        trashButton.addTarget(self, action: #selector(handleTrashTapped), for: .touchUpInside)
+        stackMenu.addArrangedSubview(trashButton)
         
-        stackMenu.layer.zPosition = .greatestFiniteMagnitude
+        canvas.addSubview(stackMenu)
     }
     
     // MARK: - Event Handlers
     
     @objc
     func handleGlobalTrashTapped() {
-        
+        print("Global trash")
     }
     
     @objc
     func handleReadyTapped() {
-        
+        print("ready")
     }
     
     @objc
     func handleToolTapped(_ sender: UIButton) {
-        
+        print("tool")
+    }
+    
+    @objc
+    func handleAddTapped() {
+        print("add")
+    }
+    
+    @objc
+    func handleColourTapped() {
+        print("colour")
+    }
+    
+    @objc
+    func handleMoveTapped(_ sender: UIButton) {
+        print("move")
+    }
+    
+    @objc
+    func handleResizeTapped(_ sender: UIButton) {
+        print("resize")
+    }
+    
+    @objc
+    func handleRotateTapped(_ sender: UIButton) {
+        print("rotate")
+    }
+    
+    @objc
+    func handleTrashTapped(_ sender: UIButton) {
+        print("trash")
     }
     
     
