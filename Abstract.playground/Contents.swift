@@ -7,21 +7,25 @@ class CanvasViewController : UIViewController {
     
     var canvas: UIView!
     var stackMenu: UIStackView!
+    var helpButton: UIButton!
     
     override func loadView() {
         canvas = UIView()
         
         canvas.backgroundColor = .white
 
-        self.view = canvas
+        
         configureUI()
         
-        
+        self.view = canvas
     }
+    
+    // MARK: - Setup Methods
     
     private func configureUI() {
         setupNavBar()
         setupToolBar()
+        setupHelpButton()
     }
     
     private func setupNavBar() {
@@ -45,50 +49,91 @@ class CanvasViewController : UIViewController {
     private func setupToolBar() {
         stackMenu = UIStackView()
         stackMenu.axis = .horizontal
-        stackMenu.frame = CGRect(x: 10, y: 70, width: 300, height: 50)
+        stackMenu.frame = CGRect(x: 20, y: 50, width: 30, height: 50)
         stackMenu.distribution = .fillProportionally
         stackMenu.spacing = 2.0
 
         let commonButtonSize: CGRect = CGRect(x: 0, y: 0, width: 30, height: 30)
         let symbolConfig = UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold, scale: .medium)
-        let toolSymbolConfig = UIImage.SymbolConfiguration(pointSize: 50, weight: .bold, scale: .large)
         
-        let toolButton = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
-        toolButton.setImage(UIImage(systemName: "pencil.circle", withConfiguration: toolSymbolConfig), for: .normal)
-        toolButton.addTarget(self, action: #selector(handleToolTapped), for: .touchUpInside)
+        let toolButton = UIButton(frame: commonButtonSize)
+        toolButton.setImage(UIImage(systemName: "chevron.right", withConfiguration: symbolConfig), for: .normal)
+        toolButton.addTarget(self, action: #selector(handleToolBarEvent), for: .touchUpInside)
+        toolButton.tag = 0
         stackMenu.addArrangedSubview(toolButton)
         
         let addButton = UIButton(frame: commonButtonSize)
         addButton.setImage(UIImage(systemName: "plus", withConfiguration: symbolConfig), for: .normal)
-        addButton.addTarget(self, action: #selector(handleAddTapped), for: .touchUpInside)
+        addButton.addTarget(self, action: #selector(handleToolBarEvent), for: .touchUpInside)
+        addButton.tag = 1
+        addButton.isHidden = true
         stackMenu.addArrangedSubview(addButton)
 
         let colourButton = UIButton(frame: commonButtonSize)
         colourButton.setImage(UIImage(systemName: "paintbrush", withConfiguration: symbolConfig), for: .normal)
-        colourButton.addTarget(self, action: #selector(handleColourTapped), for: .touchUpInside)
+        colourButton.addTarget(self, action: #selector(handleToolBarEvent), for: .touchUpInside)
+        colourButton.tag = 2
+        colourButton.isHidden = true
         stackMenu.addArrangedSubview(colourButton)
 
         let moveButton = UIButton(frame: commonButtonSize)
         moveButton.setImage(UIImage(systemName: "hand.draw", withConfiguration: symbolConfig), for: .normal)
-        moveButton.addTarget(self, action: #selector(handleMoveTapped), for: .touchUpInside)
+        moveButton.addTarget(self, action: #selector(handleToolBarEvent), for: .touchUpInside)
+        moveButton.tag = 3
+        moveButton.isHidden = true
         stackMenu.addArrangedSubview(moveButton)
 
         let resizeButton = UIButton(frame: commonButtonSize)
         resizeButton.setImage(UIImage(systemName: "arrow.up.left.and.arrow.down.right", withConfiguration: symbolConfig), for: .normal)
-        resizeButton.addTarget(self, action: #selector(handleResizeTapped), for: .touchUpInside)
+        resizeButton.addTarget(self, action: #selector(handleToolBarEvent), for: .touchUpInside)
+        resizeButton.tag = 4
+        resizeButton.isHidden = true
         stackMenu.addArrangedSubview(resizeButton)
 
         let rotateButton = UIButton(frame: commonButtonSize)
         rotateButton.setImage(UIImage(systemName: "arrow.2.circlepath", withConfiguration: symbolConfig), for: .normal)
-        rotateButton.addTarget(self, action: #selector(handleRotateTapped), for: .touchUpInside)
+        rotateButton.addTarget(self, action: #selector(handleToolBarEvent), for: .touchUpInside)
+        rotateButton.tag = 5
+        rotateButton.isHidden = true
         stackMenu.addArrangedSubview(rotateButton)
 
         let trashButton = UIButton(frame: commonButtonSize)
         trashButton.setImage(UIImage(systemName: "trash", withConfiguration: symbolConfig), for: .normal)
-        trashButton.addTarget(self, action: #selector(handleTrashTapped), for: .touchUpInside)
+        trashButton.addTarget(self, action: #selector(handleToolBarEvent), for: .touchUpInside)
+        trashButton.tag = 6
+        trashButton.isHidden = true
         stackMenu.addArrangedSubview(trashButton)
         
         canvas.addSubview(stackMenu)
+    }
+    
+    private func setupHelpButton() {
+        let buttonConfig = UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold, scale: .medium)
+        helpButton = UIButton(frame: CGRect(x: 330, y: 60, width: 30, height: 30))
+        helpButton.setImage(UIImage(systemName: "questionmark", withConfiguration: buttonConfig), for: .normal)
+        helpButton.addTarget(self, action: #selector(handleHelpTapped), for: .touchUpInside)
+        
+        canvas.addSubview(helpButton)
+    }
+    
+    //MARK: - Actions
+    
+    private func toggleToolBar() {
+        UIView.animate(
+            withDuration: 0.8,
+            delay: 0,
+            usingSpringWithDamping: 0.8,
+            initialSpringVelocity: 0.2,
+            options: .curveEaseOut,
+            animations: {
+                for index in 1...self.stackMenu.arrangedSubviews.count-1 {
+                    self.stackMenu.arrangedSubviews[index].isHidden = !self.stackMenu.arrangedSubviews[index].isHidden
+                }
+                let desiredWidth = self.stackMenu.arrangedSubviews[1].isHidden ? 30 : 300
+                let desiredImage = self.stackMenu.arrangedSubviews[1].isHidden ? "chevron.right" : "chevron.left"
+                self.stackMenu.frame = CGRect(x: 20, y: 50, width: desiredWidth, height: 50)
+                (self.stackMenu.arrangedSubviews.first as! UIButton).setImage(UIImage(systemName: desiredImage, withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold, scale: .medium)), for: .normal)
+        }, completion: nil)
     }
     
     // MARK: - Event Handlers
@@ -104,38 +149,47 @@ class CanvasViewController : UIViewController {
     }
     
     @objc
-    func handleToolTapped(_ sender: UIButton) {
-        print("tool")
+    func handleToolBarEvent(_ sender: UIButton) {
+        let buttonIndex = sender.tag
+        let selectedButton = stackMenu.arrangedSubviews[buttonIndex] as! UIButton
+        
+        for button in stackMenu.arrangedSubviews where button != selectedButton {
+            button.tintColor = .systemBlue
+        }
+        
+        if buttonIndex == 0 {
+            // tool button action
+            toggleToolBar()
+        } else if buttonIndex == 1 {
+            // add button action
+            
+        } else if buttonIndex == 2 {
+            // colour button action
+            selectedButton.tintColor = .black
+            
+        } else if buttonIndex == 3 {
+            // move button action
+            selectedButton.tintColor = .black
+            
+        } else if buttonIndex == 4 {
+            // resize button action
+            selectedButton.tintColor = .black
+            
+        } else if buttonIndex == 5 {
+            // rotate button action
+            selectedButton.tintColor = .black
+            
+        } else if buttonIndex == 6 {
+            // trash button action
+            selectedButton.tintColor = .black
+            
+        }
+        
     }
     
     @objc
-    func handleAddTapped() {
-        print("add")
-    }
-    
-    @objc
-    func handleColourTapped() {
-        print("colour")
-    }
-    
-    @objc
-    func handleMoveTapped(_ sender: UIButton) {
-        print("move")
-    }
-    
-    @objc
-    func handleResizeTapped(_ sender: UIButton) {
-        print("resize")
-    }
-    
-    @objc
-    func handleRotateTapped(_ sender: UIButton) {
-        print("rotate")
-    }
-    
-    @objc
-    func handleTrashTapped(_ sender: UIButton) {
-        print("trash")
+    func handleHelpTapped() {
+        print("help")
     }
     
     
