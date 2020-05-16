@@ -4,9 +4,6 @@ import UIKit
 import PlaygroundSupport
 
 /* TODO
- - remove gesture when in resize state
- - figure out which actions can carry into multiple states
- - different shapes
  - add random tag to shapes to find them later (delete)
  - pictures for shape add buttons, position of where shapes spawn
  - colour picker
@@ -136,6 +133,7 @@ class CanvasViewController : UIViewController {
         squareButton.backgroundColor = .red
         squareButton.layer.borderColor = UIColor.black.cgColor
         squareButton.layer.borderWidth = 2
+        squareButton.tag = ShapeType.square.rawValue
         squareButton.addTarget(self, action: #selector(addShapePressed), for: .touchDown)
         addMenu.addArrangedSubview(squareButton)
         
@@ -143,12 +141,16 @@ class CanvasViewController : UIViewController {
         circleButton.backgroundColor = .blue
         circleButton.layer.borderColor = UIColor.black.cgColor
         circleButton.layer.borderWidth = 2
+        circleButton.tag = ShapeType.circle.rawValue
+        circleButton.addTarget(self, action: #selector(addShapePressed), for: .touchDown)
         addMenu.addArrangedSubview(circleButton)
         
         let triangleButton = UIButton(frame: commonButtonSize)
         triangleButton.backgroundColor = .yellow
         triangleButton.layer.borderColor = UIColor.black.cgColor
         triangleButton.layer.borderWidth = 2
+        triangleButton.tag = ShapeType.triangle.rawValue
+        triangleButton.addTarget(self, action: #selector(addShapePressed), for: .touchDown)
         addMenu.addArrangedSubview(triangleButton)
         
         addMenu.isHidden = true
@@ -177,8 +179,7 @@ class CanvasViewController : UIViewController {
     }
     
     private func toggleAddMenu() {
-        print("toggle add menu")
-        addMenu.isHidden = !addMenu.isHidden
+        addMenu.isHidden = !addMenu.isHidden // toggle() does not work in playground
         if addMenu.isHidden {
             stackMenu.arrangedSubviews[Tool.add.rawValue].tintColor = .systemBlue
         }
@@ -232,19 +233,18 @@ class CanvasViewController : UIViewController {
     
     @objc
     func addShapePressed(_ sender: UIButton) {
-        // change button colour back to blue
-        // put menu down
-        // add shape on screen
-        let shape = Shape(frame: CGRect(x: 100, y: 100, width: 50, height: 50))
+        let shapeSelected = sender.tag
+        let shapeType = ShapeType(rawValue: shapeSelected) ?? .square
+        
+        let shape = Shape(frame: CGRect(x: 150, y: 300, width: 100, height: 100), type: shapeType)
         canvas.addSubview(shape)
 
-        print("SHAPE")
         canvas.bringSubviewToFront(stackMenu)
+        toggleAddMenu()
     }
-    
-    
 }
 
+// MARK: - State singleton
 class State {
     static var current: Tool = .none
 }
@@ -261,8 +261,8 @@ enum Tool: Int {
 
 enum ShapeType: Int {
     case square = 0
-    case triangle = 1
-    case circle = 2
+    case circle = 1
+    case triangle = 2
 }
 
 class Shape: UIView {
@@ -276,13 +276,21 @@ class Shape: UIView {
     var edgeTouched: Edge = .none
     var panRecognizer: UIPanGestureRecognizer!
     
-    override init(frame: CGRect) {
+    var shapeType: ShapeType
+    
+    init(frame: CGRect, type: ShapeType) {
+        self.shapeType = type
         super.init(frame: frame)
 
         panRecognizer = UIPanGestureRecognizer(target:self, action:#selector(detectPan))
-        gestureRecognizers = [panRecognizer] // REMOVE GESURE WHEN RESIZING!
-
-        backgroundColor = .red
+        gestureRecognizers = [panRecognizer]
+        
+        backgroundColor = type == .triangle ? .clear : .red
+        
+        if type == .circle {
+            layer.cornerRadius = frame.size.width / 2
+            clipsToBounds = true
+        }
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -293,7 +301,16 @@ class Shape: UIView {
         //self.superview?.bringSubviewToFront(self)
         lastLocation = self.center
         
+        layer.borderColor = UIColor.black.cgColor
+        layer.borderWidth = 2
+        
+        if !containsGestureRecognizer(recognizers: gestureRecognizers, find: panRecognizer) {
+            addGestureRecognizer(panRecognizer)
+        }
+        
         guard State.current == .resize else { return }
+        
+        removeGestureRecognizer(panRecognizer)
         
         if let touch = touches.first {
 
@@ -342,21 +359,39 @@ class Shape: UIView {
             default:
                 center = CGPoint(x: center.x + currentPoint.x - touchStart.x, y: center.y + currentPoint.y - touchStart.y)
             }
+            if shapeType == .circle {
+                layer.cornerRadius = frame.size.width / 2
+            }
         }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         edgeTouched = .none
+        layer.borderColor = UIColor.clear.cgColor
+    }
+    
+    override func draw(_ rect: CGRect) {
+        guard let context = UIGraphicsGetCurrentContext(), shapeType == .triangle else { return }
+
+        context.beginPath()
+        context.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+        context.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        context.addLine(to: CGPoint(x: (rect.maxX / 2.0), y: rect.minY))
+        context.closePath()
+
+        // need a conversion for triangle to fill this colour
+        context.setFillColor(red: 1.0, green: 0.5, blue: 0.0, alpha: 0.60)
+        context.fillPath()
     }
     
     @objc func detectPan(_ recognizer: UIPanGestureRecognizer) {
-        guard State.current == .move || State.current == .rotate else { return }
+        guard State.current == .move || State.current == .rotate || State.current == .add else { return }
         
         let location = recognizer.location(in: self)
         let gestureRotation = CGFloat(angle(location)) - startRotationAngle
         let translation  = recognizer.translation(in: self.superview)
         
-        if State.current == .move {
+        if State.current == .move || State.current == .add {
             self.center = CGPoint(x: lastLocation.x + translation.x, y: lastLocation.y + translation.y)
         } else if State.current == .rotate {
             switch recognizer.state {
@@ -372,7 +407,7 @@ class Shape: UIView {
         }
     }
     
-    func rotate(to value: CGFloat) {
+    private func rotate(to value: CGFloat) {
         rotateAnimation.fromValue = value
         rotateAnimation.toValue = value
         rotateAnimation.duration = 0
@@ -383,11 +418,20 @@ class Shape: UIView {
         layer.add(rotateAnimation, forKey: "transform.rotation.z")
     }
     
-    func angle(_ location: CGPoint) -> CGFloat {
+    private func angle(_ location: CGPoint) -> CGFloat {
         let deltaY = location.y - center.y
         let deltaX = location.x - center.x
         let angle = atan2(deltaY, deltaX) * 180 / .pi
         return angle < 0 ? abs(angle) : 360 - angle
+    }
+    
+    func containsGestureRecognizer(recognizers: [UIGestureRecognizer]?, find: UIGestureRecognizer) -> Bool {
+       if let recognizers = recognizers {
+           for gr in recognizers where gr == find {
+                return true
+           }
+       }
+       return false
     }
     
     enum Edge {
