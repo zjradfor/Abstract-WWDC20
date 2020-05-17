@@ -390,6 +390,98 @@ class ColourPickerViewController: UIViewController {
     
 }
 
+// MARK: - Help
+
+class HelpViewController: UIViewController {
+    
+    let helpView = UIView()
+    
+    override func loadView() {
+        helpView.backgroundColor = .white
+        configureUI()
+        self.view = helpView
+    }
+    
+    private func configureUI() {
+        let titleLabel = UILabel(frame: CGRect(x: 80, y: 20, width: 300, height: 50))
+        titleLabel.text = "Welcome to Abstract!"
+        titleLabel.font = .boldSystemFont(ofSize: 20)
+        helpView.addSubview(titleLabel)
+        
+        let descriptionLabel = UILabel(frame: CGRect(x: 20, y: 50, width: 350, height: 100))
+        descriptionLabel.text = "Add shapes to your Canvas! Position, move, rotate, and colour them to create your very own masterpiece!"
+        descriptionLabel.numberOfLines = 0
+        helpView.addSubview(descriptionLabel)
+        
+        let imageView = UIImageView(frame: CGRect(x: 60, y: 150, width: 250, height: 250))
+        imageView.image = UIImage(named: "mario")
+        helpView.addSubview(imageView)
+        
+        let verticalStack = UIStackView(frame: CGRect(x: 80, y: 420, width: 300, height: 100))
+        verticalStack.axis = .vertical
+        verticalStack.distribution = .fillProportionally
+        verticalStack.spacing = 12
+        
+        let firstRow = UIStackView(frame: CGRect(x: 0, y: 0, width: 300, height: 20))
+        firstRow.distribution = .fillProportionally
+
+        let toolImage = UIImageView(frame: CGRect(x: 0, y: 0, width: 20, height: 20))
+        toolImage.image = UIImage(systemName: "chevron.right")
+        toolImage.contentMode = .scaleAspectFit
+        firstRow.addArrangedSubview(toolImage)
+
+        let toolText = UILabel(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        toolText.text = ": access the toolbar!"
+        firstRow.addArrangedSubview(toolText)
+
+        verticalStack.addArrangedSubview(firstRow)
+        
+        let secondRow = UIStackView(frame: CGRect(x: 0, y: 0, width: 300, height: 20))
+        secondRow.distribution = .fillProportionally
+
+        let trashImage = UIImageView(frame: CGRect(x: 0, y: 0, width: 20, height: 20))
+        trashImage.image = UIImage(systemName: "trash")
+        trashImage.contentMode = .scaleAspectFit
+        secondRow.addArrangedSubview(trashImage)
+
+        let trashText = UILabel(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        trashText.text = ": start over!"
+        secondRow.addArrangedSubview(trashText)
+
+        verticalStack.addArrangedSubview(secondRow)
+        
+        let thirdRow = UIStackView(frame: CGRect(x: 0, y: 0, width: 300, height: 20))
+        thirdRow.distribution = .fillProportionally
+
+        let readyImage = UIImageView(frame: CGRect(x: 0, y: 0, width: 20, height: 20))
+        readyImage.image = UIImage(systemName: "checkmark.circle")
+        readyImage.contentMode = .scaleAspectFit
+        thirdRow.addArrangedSubview(readyImage)
+
+        let readyText = UILabel(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        readyText.text = ": abstract your canvas!"
+        thirdRow.addArrangedSubview(readyText)
+
+        verticalStack.addArrangedSubview(thirdRow)
+        
+        helpView.addSubview(verticalStack)
+        
+        let getStartedButton = UIButton(frame: CGRect(x: 120, y: 550, width: 150, height: 50))
+        getStartedButton.setTitle("Get Started!", for: .normal)
+        getStartedButton.backgroundColor = .orange
+        getStartedButton.layer.borderColor = UIColor.black.cgColor
+        getStartedButton.layer.borderWidth = 2
+        getStartedButton.addTarget(self, action: #selector(getStartedPressed), for: .touchUpInside)
+        helpView.addSubview(getStartedButton)
+    }
+    
+    @objc
+    func getStartedPressed() {
+        dismiss(animated: true, completion: nil)
+    }
+    
+}
+
 // MARK: - Shape Class
 
 class Shape: UIView {
@@ -621,32 +713,6 @@ extension UIColor {
     var greenValue: CGFloat{ return CIColor(color: self).green }
     var blueValue: CGFloat{ return CIColor(color: self).blue }
     var alphaValue: CGFloat{ return CIColor(color: self).alpha }
-}
-
-class HelpViewController: UIViewController {
-    
-    let helpView = UIView()
-    
-    override func loadView() {
-        helpView.backgroundColor = .white
-        configureUI()
-        self.view = helpView
-    }
-    
-    private func configureUI() {
-        let titleLabel = UILabel(frame: CGRect(x: 80, y: 20, width: 300, height: 50))
-        titleLabel.text = "Welcome to Abstract!"
-        titleLabel.font = .boldSystemFont(ofSize: 20)
-        helpView.addSubview(titleLabel)
-        
-        let descriptionLabel = UILabel(frame: CGRect(x: 20, y: 50, width: 350, height: 100))
-        descriptionLabel.text = "Add shapes to your Canvas! Position, move, rotate, and colour them to create your very own masterpiece!"
-        descriptionLabel.numberOfLines = 0
-        helpView.addSubview(descriptionLabel)
-        
-        let image = UIImageView(frame: CGRect(x: 20, y: 100, width: 350, height: 350))
-    }
-    
 }
 
 let navigationController = UINavigationController(rootViewController: CanvasViewController())
