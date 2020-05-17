@@ -4,11 +4,9 @@ import UIKit
 import PlaygroundSupport
 
 /* TODO
- - add random tag to shapes to find them later (delete)
  - pictures for shape add buttons, position of where shapes spawn
  - colour picker
  - welcome view (help)
- - image filter (done)
  */
 
 class CanvasViewController : UIViewController {
@@ -180,25 +178,74 @@ class CanvasViewController : UIViewController {
     
     private func toggleAddMenu() {
         addMenu.isHidden = !addMenu.isHidden // toggle() does not work in playground
+        canvas.bringSubviewToFront(addMenu)
         if addMenu.isHidden {
             stackMenu.arrangedSubviews[Tool.add.rawValue].tintColor = .systemBlue
         }
     }
     
     private func showColourPicker() {
-        print("show colour picker")
+        present(ColourPickerViewController(), animated: true, completion: nil)
+    }
+    
+    private func abstractImage(_ image: UIImage) -> UIImage {
+        var outputCGImage: CGImage?
+        
+        let filter = CIFilter(name: "CIPointillize", parameters: ["inputRadius" : 15])
+        
+        let ciInput = CIImage(image: image)
+        filter?.setValue(ciInput, forKey: "inputImage")
+
+        let ciContext = CIContext()
+        if let ciOutput = filter?.outputImage {
+            outputCGImage = ciContext.createCGImage(ciOutput, from: ciOutput.extent)
+        }
+
+        return UIImage(cgImage: outputCGImage!)
+    }
+    
+    private func imageReady() {
+        stackMenu.removeFromSuperview()
+        helpButton.removeFromSuperview()
+        addMenu.removeFromSuperview()
+        
+        let image = abstractImage(canvas.asImage())
+        
+        let imageView = UIImageView(frame: CGRect(x: 0, y: 0, width: canvas.frame.width, height: canvas.frame.height))
+        imageView.image = image
+        
+        canvas.addSubview(imageView)
     }
     
     // MARK: - Event Handlers
     
     @objc
     func handleGlobalTrashTapped() {
-        print("Global trash")
+        let alert = UIAlertController(title: "Clear Canvas?", message: "Your canvas will be cleared of all work, are you sure?", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "No", style: .default, handler: nil))
+
+        alert.addAction(UIAlertAction(title: "Yes", style: .default, handler: { _ in
+            for view in self.canvas.subviews {
+                view.removeFromSuperview()
+            }
+            self.setupToolBar()
+            self.setupHelpButton()
+            self.setupAddMenu()
+        }))
+        
+        present(alert, animated: true, completion: nil)
     }
     
     @objc
     func handleReadyTapped() {
-        print("ready")
+        let alert = UIAlertController(title: "Abstract Your Masterpiece?", message: "", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "No", style: .default, handler: nil))
+
+        alert.addAction(UIAlertAction(title: "Yes", style: .default, handler: { _ in
+            self.imageReady()
+        }))
+        
+        present(alert, animated: true, completion: nil)
     }
     
     @objc
@@ -228,7 +275,7 @@ class CanvasViewController : UIViewController {
     
     @objc
     func handleHelpTapped() {
-        print("help")
+        
     }
     
     @objc
@@ -244,25 +291,99 @@ class CanvasViewController : UIViewController {
     }
 }
 
-// MARK: - State singleton
-class State {
-    static var current: Tool = .none
-}
+class ColourPickerViewController: UIViewController {
+    
+    var colourView: UIView!
+    
+    override func loadView() {
+        colourView = UIView()
+        colourView.backgroundColor = .white
+        
+        configureUI()
+        
+        self.view = colourView
+    }
+    
+    private func configureUI() {
+        let verticalStack = UIStackView(frame: CGRect(x: 20, y: 80, width: 335, height: 350))
+        verticalStack.axis = .vertical
+        verticalStack.distribution = .fillEqually
+        verticalStack.spacing = 12
+        
+        let firstRow = UIStackView(frame: CGRect(x: 0, y: 0, width: 250, height: 100))
+        firstRow.distribution = .fillEqually
+        firstRow.spacing = 12
 
-enum Tool: Int {
-    case none = 0
-    case add = 1
-    case colour = 2
-    case move = 3
-    case resize = 4
-    case rotate = 5
-    case trash = 6
-}
+        let blueView = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        blueView.backgroundColor = .blue
+        blueView.addTarget(self, action: #selector(colourWasTapped), for: .touchUpInside)
+        firstRow.addArrangedSubview(blueView)
 
-enum ShapeType: Int {
-    case square = 0
-    case circle = 1
-    case triangle = 2
+        let yellowView = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        yellowView.backgroundColor = .yellow
+        yellowView.addTarget(self, action: #selector(colourWasTapped), for: .touchUpInside)
+        firstRow.addArrangedSubview(yellowView)
+
+        let redView = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        redView.backgroundColor = .red
+        redView.addTarget(self, action: #selector(colourWasTapped), for: .touchUpInside)
+        firstRow.addArrangedSubview(redView)
+
+        verticalStack.addArrangedSubview(firstRow)
+        
+        let secondRow = UIStackView(frame: CGRect(x: 0, y: 0, width: 250, height: 100))
+        secondRow.distribution = .fillEqually
+        secondRow.spacing = 12
+        
+        let orangeView = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        orangeView.backgroundColor = .orange
+        orangeView.addTarget(self, action: #selector(colourWasTapped), for: .touchUpInside)
+        secondRow.addArrangedSubview(orangeView)
+        
+        let greenView = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        greenView.backgroundColor = .green
+        greenView.addTarget(self, action: #selector(colourWasTapped), for: .touchUpInside)
+        secondRow.addArrangedSubview(greenView)
+        
+        let purpleView = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        purpleView.backgroundColor = .purple
+        purpleView.addTarget(self, action: #selector(colourWasTapped), for: .touchUpInside)
+        secondRow.addArrangedSubview(purpleView)
+        
+        verticalStack.addArrangedSubview(secondRow)
+        
+        let thirdRow = UIStackView(frame: CGRect(x: 0, y: 0, width: 250, height: 100))
+        thirdRow.distribution = .fillEqually
+        thirdRow.spacing = 12
+        
+        let pinkView = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        pinkView.backgroundColor = .systemPink
+        pinkView.addTarget(self, action: #selector(colourWasTapped), for: .touchUpInside)
+        thirdRow.addArrangedSubview(pinkView)
+        
+        let blackView = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        blackView.backgroundColor = .black
+        blackView.addTarget(self, action: #selector(colourWasTapped), for: .touchUpInside)
+        thirdRow.addArrangedSubview(blackView)
+        
+        let grayView = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+        grayView.backgroundColor = .gray
+        grayView.addTarget(self, action: #selector(colourWasTapped), for: .touchUpInside)
+        thirdRow.addArrangedSubview(grayView)
+        
+        verticalStack.addArrangedSubview(thirdRow)
+        
+        colourView.addSubview(verticalStack)
+    }
+    
+    @objc
+    func colourWasTapped(_ sender: UIButton) {
+        guard let colour = sender.backgroundColor else { return }
+
+        State.colour = colour
+        dismiss(animated: true, completion: nil)
+    }
+    
 }
 
 class Shape: UIView {
@@ -285,7 +406,7 @@ class Shape: UIView {
         panRecognizer = UIPanGestureRecognizer(target:self, action:#selector(detectPan))
         gestureRecognizers = [panRecognizer]
         
-        backgroundColor = type == .triangle ? .clear : .red
+        backgroundColor = type == .triangle ? .clear : State.colour
         
         if type == .circle {
             layer.cornerRadius = frame.size.width / 2
@@ -298,11 +419,23 @@ class Shape: UIView {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        //self.superview?.bringSubviewToFront(self)
         lastLocation = self.center
-        
         layer.borderColor = UIColor.black.cgColor
         layer.borderWidth = 2
+        
+        guard State.current != .trash else {
+            removeFromSuperview()
+            return
+        }
+        
+        guard State.current != .colour else {
+            if shapeType == .triangle {
+                setNeedsDisplay()
+            } else {
+                backgroundColor = State.colour
+            }
+            return
+        }
         
         if !containsGestureRecognizer(recognizers: gestureRecognizers, find: panRecognizer) {
             addGestureRecognizer(panRecognizer)
@@ -372,15 +505,14 @@ class Shape: UIView {
     
     override func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext(), shapeType == .triangle else { return }
-
+        
         context.beginPath()
         context.move(to: CGPoint(x: rect.minX, y: rect.maxY))
         context.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
         context.addLine(to: CGPoint(x: (rect.maxX / 2.0), y: rect.minY))
         context.closePath()
 
-        // need a conversion for triangle to fill this colour
-        context.setFillColor(red: 1.0, green: 0.5, blue: 0.0, alpha: 0.60)
+        context.setFillColor(red: State.colour.redValue, green: State.colour.greenValue, blue: State.colour.blueValue, alpha: State.colour.alphaValue)
         context.fillPath()
     }
     
@@ -408,14 +540,7 @@ class Shape: UIView {
     }
     
     private func rotate(to value: CGFloat) {
-        rotateAnimation.fromValue = value
-        rotateAnimation.toValue = value
-        rotateAnimation.duration = 0
-        rotateAnimation.repeatCount = 0
-        rotateAnimation.isRemovedOnCompletion = false
-        rotateAnimation.fillMode = CAMediaTimingFillMode.forwards
-        rotateAnimation.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.linear)
-        layer.add(rotateAnimation, forKey: "transform.rotation.z")
+        transform = CGAffineTransform(rotationAngle: value)
     }
     
     private func angle(_ location: CGPoint) -> CGFloat {
@@ -441,40 +566,49 @@ class Shape: UIView {
         case bottomLeft
         case none
     }
-    
 }
 
-class TriangleView : UIView {
+// MARK: - State singleton
+class State {
+    static var current: Tool = .none
+    static var colour: UIColor = .gray
+}
 
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        backgroundColor = .clear
-    }
+enum Tool: Int {
+    case none = 0
+    case add = 1
+    case colour = 2
+    case move = 3
+    case resize = 4
+    case rotate = 5
+    case trash = 6
+}
 
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-    }
-
-    override func draw(_ rect: CGRect) {
-
-        guard let context = UIGraphicsGetCurrentContext() else { return }
-
-        context.beginPath()
-        context.move(to: CGPoint(x: rect.minX, y: rect.maxY))
-        context.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        context.addLine(to: CGPoint(x: (rect.maxX / 2.0), y: rect.minY))
-        context.closePath()
-
-        context.setFillColor(red: 1.0, green: 0.5, blue: 0.0, alpha: 0.60)
-        context.fillPath()
-    }
+enum ShapeType: Int {
+    case square = 0
+    case circle = 1
+    case triangle = 2
 }
 
 extension CGFloat {
     var degreesToRadians: Self { return self * .pi / 180 }
 }
 
-// Present the view controller in the Live View window
+extension UIView {
+    func asImage() -> UIImage {
+        let renderer = UIGraphicsImageRenderer(bounds: bounds)
+        return renderer.image { rendererContext in
+            layer.render(in: rendererContext.cgContext)
+        }
+    }
+}
+
+extension UIColor {
+    var redValue: CGFloat{ return CIColor(color: self).red }
+    var greenValue: CGFloat{ return CIColor(color: self).green }
+    var blueValue: CGFloat{ return CIColor(color: self).blue }
+    var alphaValue: CGFloat{ return CIColor(color: self).alpha }
+}
+
 let navigationController = UINavigationController(rootViewController: CanvasViewController())
 PlaygroundPage.current.liveView = navigationController
