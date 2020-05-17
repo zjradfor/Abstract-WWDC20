@@ -3,12 +3,6 @@
 import UIKit
 import PlaygroundSupport
 
-/* TODO
- - pictures for shape add buttons, position of where shapes spawn
- - colour picker
- - welcome view (help)
- */
-
 class CanvasViewController : UIViewController {
     
     var canvas: UIView!
@@ -33,6 +27,9 @@ class CanvasViewController : UIViewController {
         setupToolBar()
         setupHelpButton()
         setupAddMenu()
+        DispatchQueue.main.async {
+            self.showHelpScreen()
+        }
     }
     
     private func setupNavBar() {
@@ -122,13 +119,13 @@ class CanvasViewController : UIViewController {
     }
     
     private func setupAddMenu() {
-        addMenu = UIStackView(frame: CGRect(x: 0, y: 550, width: 380, height: 150))
+        addMenu = UIStackView(frame: CGRect(x: 0, y: 530, width: 380, height: 150))
         addMenu.distribution = .fillEqually
         
         let commonButtonSize = CGRect(x: 0, y: 0, width: 150, height: 150)
         
         let squareButton = UIButton(frame: commonButtonSize)
-        squareButton.backgroundColor = .red
+        squareButton.setImage(Shape(frame: CGRect(x: 10, y: 10, width: 100, height: 100), type: .square).asImage(), for: .normal)
         squareButton.layer.borderColor = UIColor.black.cgColor
         squareButton.layer.borderWidth = 2
         squareButton.tag = ShapeType.square.rawValue
@@ -136,7 +133,7 @@ class CanvasViewController : UIViewController {
         addMenu.addArrangedSubview(squareButton)
         
         let circleButton = UIButton(frame: commonButtonSize)
-        circleButton.backgroundColor = .blue
+        circleButton.setImage(Shape(frame: CGRect(x: 10, y: 10, width: 100, height: 100), type: .circle).asImage(), for: .normal)
         circleButton.layer.borderColor = UIColor.black.cgColor
         circleButton.layer.borderWidth = 2
         circleButton.tag = ShapeType.circle.rawValue
@@ -144,7 +141,7 @@ class CanvasViewController : UIViewController {
         addMenu.addArrangedSubview(circleButton)
         
         let triangleButton = UIButton(frame: commonButtonSize)
-        triangleButton.backgroundColor = .yellow
+        triangleButton.setImage(Shape(frame: CGRect(x: 10, y: 10, width: 100, height: 100), type: .triangle).asImage(), for: .normal)
         triangleButton.layer.borderColor = UIColor.black.cgColor
         triangleButton.layer.borderWidth = 2
         triangleButton.tag = ShapeType.triangle.rawValue
@@ -178,6 +175,7 @@ class CanvasViewController : UIViewController {
     
     private func toggleAddMenu() {
         addMenu.isHidden = !addMenu.isHidden // toggle() does not work in playground
+        
         canvas.bringSubviewToFront(addMenu)
         if addMenu.isHidden {
             stackMenu.arrangedSubviews[Tool.add.rawValue].tintColor = .systemBlue
@@ -217,6 +215,10 @@ class CanvasViewController : UIViewController {
         canvas.addSubview(imageView)
     }
     
+    private func showHelpScreen() {
+        present(HelpViewController(), animated: true)
+    }
+    
     // MARK: - Event Handlers
     
     @objc
@@ -238,7 +240,7 @@ class CanvasViewController : UIViewController {
     
     @objc
     func handleReadyTapped() {
-        let alert = UIAlertController(title: "Abstract Your Masterpiece?", message: "", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Ready?", message: "Are you ready to abstract your canvas?", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "No", style: .default, handler: nil))
 
         alert.addAction(UIAlertAction(title: "Yes", style: .default, handler: { _ in
@@ -275,7 +277,7 @@ class CanvasViewController : UIViewController {
     
     @objc
     func handleHelpTapped() {
-        
+        showHelpScreen()
     }
     
     @objc
@@ -290,6 +292,8 @@ class CanvasViewController : UIViewController {
         toggleAddMenu()
     }
 }
+
+// MARK: - Colour Picker
 
 class ColourPickerViewController: UIViewController {
     
@@ -386,6 +390,8 @@ class ColourPickerViewController: UIViewController {
     
 }
 
+// MARK: - Shape Class
+
 class Shape: UIView {
     
     var lastLocation: CGPoint = CGPoint.zero
@@ -408,6 +414,9 @@ class Shape: UIView {
         
         backgroundColor = type == .triangle ? .clear : State.colour
         
+        layer.borderColor = UIColor.black.cgColor
+        layer.borderWidth = 2
+        
         if type == .circle {
             layer.cornerRadius = frame.size.width / 2
             clipsToBounds = true
@@ -421,7 +430,6 @@ class Shape: UIView {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         lastLocation = self.center
         layer.borderColor = UIColor.black.cgColor
-        layer.borderWidth = 2
         
         guard State.current != .trash else {
             removeFromSuperview()
@@ -569,10 +577,13 @@ class Shape: UIView {
 }
 
 // MARK: - State singleton
+
 class State {
     static var current: Tool = .none
     static var colour: UIColor = .gray
 }
+
+// MARK: - Enums
 
 enum Tool: Int {
     case none = 0
@@ -589,6 +600,8 @@ enum ShapeType: Int {
     case circle = 1
     case triangle = 2
 }
+
+// MARK: - Extensions
 
 extension CGFloat {
     var degreesToRadians: Self { return self * .pi / 180 }
@@ -608,6 +621,32 @@ extension UIColor {
     var greenValue: CGFloat{ return CIColor(color: self).green }
     var blueValue: CGFloat{ return CIColor(color: self).blue }
     var alphaValue: CGFloat{ return CIColor(color: self).alpha }
+}
+
+class HelpViewController: UIViewController {
+    
+    let helpView = UIView()
+    
+    override func loadView() {
+        helpView.backgroundColor = .white
+        configureUI()
+        self.view = helpView
+    }
+    
+    private func configureUI() {
+        let titleLabel = UILabel(frame: CGRect(x: 80, y: 20, width: 300, height: 50))
+        titleLabel.text = "Welcome to Abstract!"
+        titleLabel.font = .boldSystemFont(ofSize: 20)
+        helpView.addSubview(titleLabel)
+        
+        let descriptionLabel = UILabel(frame: CGRect(x: 20, y: 50, width: 350, height: 100))
+        descriptionLabel.text = "Add shapes to your Canvas! Position, move, rotate, and colour them to create your very own masterpiece!"
+        descriptionLabel.numberOfLines = 0
+        helpView.addSubview(descriptionLabel)
+        
+        let image = UIImageView(frame: CGRect(x: 20, y: 100, width: 350, height: 350))
+    }
+    
 }
 
 let navigationController = UINavigationController(rootViewController: CanvasViewController())
